@@ -16,60 +16,48 @@
 
 | ファイル | 用途 |
 |---|---|
-| `rotating_snakes_exhibition.py` | 展示会用プログラム（Python/Pygame） |
-| `generate_gif.py` | GIF/MP4生成スクリプト |
-| `rotating_snakes_art.mp4` | SNS投稿用MP4（640×480, 75秒, 4.2MB） |
-| `rotating_snakes_sns.gif` | SNS用GIF フル版（480×360, 75秒, 3.8MB） |
-| `rotating_snakes_sns_short.gif` | SNS用GIF ショート版（1サイクル, 1.3MB） |
+| `generate_animation.py` | MP4 / GIF 生成スクリプト |
 | `KitaokaPosi_640.jpg` | 元画像（北岡明佳教授による蛇の回転錯視） |
 
-## 展示版の使い方
+## 使い方
 
 ### 必要環境
 
-```
-pip install pygame Pillow
-```
+- Python 3.8+
+- Pillow（`pip install Pillow`）
+- ffmpeg（パスが通っていること）
 
 ### 実行
 
 ```bash
-# KitaokaPosi_640.jpg と同じディレクトリで実行
-python rotating_snakes_exhibition.py
+# KitaokaPosi_640.jpg と同じディレクトリで
+python generate_animation.py
 ```
 
-### 操作
+カレントディレクトリに以下が出力されます。
 
-- **F** — フルスクリーン切替
-- **ESC / Q** — 終了
+| 出力ファイル | 用途 |
+|---|---|
+| `rotating_snakes.mp4` | 展示・SNS投稿用（高画質、約5MB） |
+| `rotating_snakes.gif` | Twitter/X 自動再生・プレビュー用（約4MB） |
+
+一時ファイルは生成しません。フレームはメモリ上で生成し、パイプ経由で ffmpeg に直接渡しています。
 
 ### カスタマイズ
 
-`rotating_snakes_exhibition.py` 冒頭の設定値を変更できます。
+`generate_animation.py` 冒頭の設定値を変更できます。
 
 ```python
-SCALE = 2               # 表示倍率（2=1280x960, 3=1920x1440）
-ROTATION_DURATION = 20.0 # 1回転の秒数（大きいほど判別困難）
-PAUSE_DURATION = 5.0     # 回転間の静止時間
-FULLSCREEN_START = False  # True で起動時フルスクリーン
+ROTATION_SPEED = 20.0    # 1回転にかかる秒数（大きいほどゆっくり＝判別困難）
+ROTATION_SECS = 20.0     # ディスクを回転させる時間（秒）
+PAUSE_SECS = 5.0         # 回転後の静止時間
+NUM_CYCLES = 3           # サイクル数（ディスクが入れ替わる回数）
+DISK_PLAN = None         # 回転ディスクの順番。Noneでランダム、[4,1,3]等で固定
+ROTATION_DIRECTION = "random"  # "cw"=時計回り / "ccw"=反時計回り / "random"=毎回ランダム
+SEED = None              # ランダムシード。Noneで毎回異なる結果、整数で再現可能
 ```
 
-展示環境に合わせて `SCALE` をモニター解像度に調整してください。`ROTATION_DURATION` を30〜40秒に伸ばすと、錯視との区別がさらに難しくなります。
-
-## GIF/MP4の再生成
-
-```bash
-python generate_gif.py
-```
-
-`generate_gif.py` 内の設定で回転パラメータを調整できます。
-
-```python
-ROTATION_SECS = 20.0    # 1回転の秒数
-PAUSE_SECS = 5.0        # 静止時間
-NUM_CYCLES = 3           # サイクル数
-DISK_PLAN = [4, 1, 3]   # 回転ディスクの順番（0-5、下図参照）
-```
+`ROTATION_SPEED` と `ROTATION_SECS` は独立に設定できます。たとえば `ROTATION_SPEED=20, ROTATION_SECS=30` なら、20秒で1回転する速さで30秒間回り続けます（1.5回転）。`ROTATION_SPEED` を30〜40秒に伸ばすと、錯視との区別がさらに難しくなります。
 
 ### ディスク番号
 
@@ -87,6 +75,7 @@ DISK_PLAN = [4, 1, 3]   # 回転ディスクの順番（0-5、下図参照）
 - ディスクは元画像から円形マスクで切り出し、PIL の `rotate()` で回転後に元位置へ再合成しています
 - 蛇の回転錯視のパターンは準回転対称のため、90度回転時でもピクセル差分の最大値は42/255程度と小さく、これが「本物の回転が見分けにくい」という作品効果の物理的根拠になっています
 - GIF は ffmpeg の palettegen/paletteuse パイプラインで最適化（差分モード + Bayer ディザリング）
+- フレームはパイプ経由で ffmpeg に直接渡すため、一時ファイルを生成しません
 
 ## クレジット
 
@@ -98,4 +87,4 @@ DISK_PLAN = [4, 1, 3]   # 回転ディスクの順番（0-5、下図参照）
 元の錯視画像の著作権は北岡明佳教授に帰属します。本作品を公開・展示する際は、元画像の使用許諾を別途ご確認ください。
 
 ## 作例
-![Rotating Snakes Illusion](rotating_snakes_sns.gif)
+![Rotating Snakes Illusion](rotating_snakes.gif)
